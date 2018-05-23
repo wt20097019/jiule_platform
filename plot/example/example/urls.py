@@ -10,8 +10,8 @@ from django.contrib import admin
 admin.autodiscover()
 
 urlpatterns = [
-    url(r'^$', frontend_views.IndexView.as_view()),
-    url(r'^frontend_charts_list/$', frontend_views.FrontendEchartsTemplate.as_view()),
+    url(r'^$', frontend_views.IndexView.as_view(), name='index'),
+    url(r'^frontend_charts_list/$', frontend_views.Frontend_charts.as_view(), name='frontend_demo'),
     url('^backend_charts_list/$', backend_views.BackendEChartsTemplate.as_view()),
 
     url(r'options/simpleBar/', frontend_views.SimpleBarView.as_view()),
@@ -27,6 +27,7 @@ urlpatterns = [
     url(r'^login/$', frontend_views.login),
     url(r'^choose/$', frontend_views.choose),
     #url(r'^static/$', frontend_views.static),
-    url(r'^show/$', frontend_views.show),
+    url(r'^show/$', frontend_views.show,name='show'),
 
 ]
+

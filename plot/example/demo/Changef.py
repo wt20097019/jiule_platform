@@ -75,44 +75,48 @@ def Str_Chnage_data(N):
 """提取字符串，存到dataFrame结构中"""
 def Change_Str_Data(da):
     length = len(da)
-    temp1 = pd.DataFrame(np.arange(length), columns=['timestamp'])
-    temp1['wear_data'] = da['wear_data'].map(Str_Chage_N(14))
-    temp2 = pd.DataFrame(np.arange(length), columns=['timestamp'])
-    temp2['wear_data'] = da['wear_data'].map(Str_Chage_N(12))
 
-    temp1['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
-    temp2['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
+    if length > 1:
+        temp1 = pd.DataFrame(np.arange(length), columns=['timestamp'])
+        temp1['wear_data'] = da['wear_data'].map(Str_Chage_N(14))
+        temp2 = pd.DataFrame(np.arange(length), columns=['timestamp'])
+        temp2['wear_data'] = da['wear_data'].map(Str_Chage_N(12))
 
-    temp1['timestamps'] = da['timestamp'].map(Str_Change_Time(0))
-    temp2['timestamps'] = da['timestamp'].map(Str_Change_Time(1))
+        temp1['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
+        temp2['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
 
-    temp1['Activity'] = da['wear_data'].map(Str_Chage_N(18))
-    temp2['Activity'] = da['wear_data'].map(Str_Chage_N(16))
+        temp1['timestamps'] = da['timestamp'].map(Str_Change_Time(0))
+        temp2['timestamps'] = da['timestamp'].map(Str_Change_Time(1))
 
-    temp1['movement'] = da['wear_data'].map(Str_Chnage_data(4))
-    temp2['movement'] = da['wear_data'].map(Str_Chnage_data(4))
+        temp1['Activity'] = da['wear_data'].map(Str_Chage_N(18))
+        temp2['Activity'] = da['wear_data'].map(Str_Chage_N(16))
 
-    temp1['channel1'] = da['wear_data'].map(Str_Chnage_data(0))
-    temp2['channel1'] = da['wear_data'].map(Str_Chnage_data(0))
+        temp1['movement'] = da['wear_data'].map(Str_Chnage_data(4))
+        temp2['movement'] = da['wear_data'].map(Str_Chnage_data(4))
 
-    temp1['channel2'] = da['wear_data'].map(Str_Chnage_data(1))
-    temp2['channel2'] = da['wear_data'].map(Str_Chnage_data(1))
+        temp1['channel1'] = da['wear_data'].map(Str_Chnage_data(0))
+        temp2['channel1'] = da['wear_data'].map(Str_Chnage_data(0))
 
-    temp1['channel3'] = da['wear_data'].map(Str_Chnage_data(2))
-    temp2['channel3'] = da['wear_data'].map(Str_Chnage_data(2))
+        temp1['channel2'] = da['wear_data'].map(Str_Chnage_data(1))
+        temp2['channel2'] = da['wear_data'].map(Str_Chnage_data(1))
 
-    temp1['Charge'] = da['wear_data'].map(Str_Chnage_data(3))
-    temp2['Charge'] = da['wear_data'].map(Str_Chnage_data(3))
+        temp1['channel3'] = da['wear_data'].map(Str_Chnage_data(2))
+        temp2['channel3'] = da['wear_data'].map(Str_Chnage_data(2))
 
-    temp1['Wear_type'] = da['wear_type']
-    temp2['Wear_type'] = da['wear_type']
+        temp1['Charge'] = da['wear_data'].map(Str_Chnage_data(3))
+        temp2['Charge'] = da['wear_data'].map(Str_Chnage_data(3))
 
-    temp1['activity'] = da['activity']
-    temp2['activity'] = da['activity']
+        temp1['Wear_type'] = da['wear_type']
+        temp2['Wear_type'] = da['wear_type']
 
-    temp3 = pd.merge(temp1, temp2, how='outer')
-    temp3 = temp3.sort_values(axis=0, ascending=True, by='timestamp')
-    temp3.index = np.arange(len(temp3))
+        temp1['activity'] = da['activity']
+        temp2['activity'] = da['activity']
+
+        temp3 = pd.merge(temp1, temp2, how='outer')
+        temp3 = temp3.sort_values(axis=0, ascending=True, by='timestamp')
+        temp3.index = np.arange(len(temp3))
+    else:
+        temp3 = []
     return temp3
 
 
@@ -160,3 +164,93 @@ def Time_get(N):
             date = timeArray[3]
         return date
     return Choose
+
+
+
+def Data_martix(da):
+
+    length1 = len(da)
+    if length1 > 1:
+        da.index = np.arange(length1)
+        temp_spo2 = pd.DataFrame(np.arange(length1), columns=['spo2'])
+        temp_spo2['spo2'] = da['spo2']
+        temp_spo2['hr'] = da['heartrate']
+        temp_spo2['wear_type'] = da['wear_type']
+        temp_spo2['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
+        temp_spo2['cost'] = da['wear_data'].map(Str_Chnage_data(5))
+        temp_spo2['cost_all'] = da['wear_data'].map(Str_Chnage_data(6))
+        temp_spo2['cost_cnt'] = da['wear_data'].map(Str_Chnage_data(9))
+        temp_spo2['healthindex'] = da['healthindex'].map(Bad_output)
+    else:
+        temp_spo2 = []
+
+    return temp_spo2
+
+
+
+def Choose_time(checklist):
+    start = 9
+    end = 23
+
+    if len(str(checklist)) < 6 :
+        mm = int(str(checklist)[2])
+    else:
+        mm = int(str(checklist)[2:4])
+
+    if mm == 0:
+        start = 9
+        end = 23
+    else:
+        if int(mm % 3) == 0:
+            start = 9
+        else:
+            start = 6 + int(mm % 3)
+
+        if mm > 9:
+            end = 21 + int((mm + 2) / 4)
+        elif mm > 6:
+            end = 21 + int((mm + 1) / 4)
+        else:
+            end = 21 + int((mm) / 4)
+    return start,end
+
+
+
+def Com_Rate(data_wear,checklist):
+    data_wear['Hour'] = 0
+    data_wear['Hour'] = data_wear['datetime'].map(Time_get(1))
+
+    rate_all = Get_rate(data_wear)
+    start, end = Choose_time(checklist)
+
+    data_night1 = data_wear[data_wear['Hour'] <= start]
+    data_night2 = data_wear[data_wear['Hour'] >= end]
+    data_night = pd.merge(data_night1, data_night2, how='outer')
+    rate_night1 = Get_rate(data_night)
+
+    data_day = data_wear[data_wear['Hour'] > start]
+    data_day = data_day[data_day['Hour'] < end]
+    rate_day1 = Get_rate(data_day)
+
+    return rate_all,rate_night1,rate_day1
+
+
+
+def Get_rate(data):
+    if len(data) > 5:
+        data_usable_hr = data[data['spo2'] > 0]
+        data_usable = data_usable_hr[data_usable_hr['heartrate'] > 0]
+        try:
+            rate = len(data_usable) / len(data) * 100
+        except ZeroDivisionError:
+            rate = 0
+    else:
+        rate = 0
+
+    rate = float('%.2f' % rate)
+    return rate
+rate_save = pd.DataFrame(np.arange(10), columns=['timesta'])
+
+
+
+

@@ -3,17 +3,115 @@
 {% block main_content %}
 
     <div class="row row-offcanvas row-offcanvas-right">
-        <div class="col-xs-6 col-sm-2 sidebar-offcanvas" id="sidebar">
+        <div class="col-xs-2 col-sm-2 sidebar-offcanvas" id="sidebar">
             <div class="list-group">
                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleBar">电容波动图(Bar)</a>
                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleKLine">血氧/心率(KLine)</a>
                 <a href="javascript:" class="list-group-item" data-echarts-name="simplePie">睡眠(sleep)</a>
-                <br>
                  <a href="javascript:" class="list-group-item" data-echarts-name="simpleRate">月度统计(Rate)</a>
             </div>
         </div>
 
-        <div class="col-xs-16 col-sm-2 sidebar-offcanvas" id="sidebar">
+ <div class="col-xs-2 col-sm-8 sidebar-offcanvas" >
+
+        <!--/.sidebar-offcanvas-->
+            <form class='bs-example bs-example-form"' action="/login/" method="post">
+
+              {% if message %}
+                  <div class="alert alert-warning">{{ message }}</div>
+              {% endif %}
+
+              {% csrf_token %}
+                <div class="col-xs-2 col-sm-4">
+              <div class="input-group">
+                  <span class="input-group-addon">CCID号:</span>
+                  <input type="text" name='username'  class="form-control" id="id_username" placeholder="CCID" autofocus required>
+
+              </div>
+</div>
+                <div class="col-xs-2 col-sm-4">
+                <div class="input-group">
+                    <span class="input-group-addon">日期</span>
+                    <input type="date" name='datetime'  value="{{date}}" class="form-control" id="datetime" auto_now autofocus required>
+                </div>
+                </div>
+
+<div class="col-xs-2 col-sm-4">
+                     <button type="submit" class="btn btn-success col-lg-12" >查   询</button>
+</div>
+
+            </form>
+
+
+  <form class='form-choose' action="/choose/" method="post">
+
+              {% if message %}
+                  <div class="alert alert-warning">{{ message }}</div>
+              {% endif %}
+
+              {% csrf_token %}
+                <br>
+                 <br>
+                 <br>
+<div class="col-xs-2 col-sm-4">
+                 <div class="input-group">
+              <span class="input-group-addon">夜晚区间</span>
+                <select class="form-control" name="select_list">
+                    <option value="1">21:00-7:00</option>
+                    <option value="2">21:00-8:00</option>
+                    <option value="3">21:00-9:00</option>
+                    <option value="4">22:00-7:00</option>
+                    <option value="5">22:00-8:00</option>
+                    <option value="6">22:00-9:00</option>
+                    <option value="7">23:00-7:00</option>
+                    <option value="8">23:00-8:00</option>
+                    <option value="9">23:00-9:00</option>
+                    <option value="10">24:00-7:00</option>
+                    <option value="11">24:00-8:00</option>
+                    <option value="12">24:00-9:00</option>
+                </select>
+                   </div >
+    </div >
+     <div class="col-xs-2 col-sm-4">
+              <div class="input-group">
+                  <span class="input-group-addon">软件版本</span>
+                 <input type="text" name='userversion' value="{{m_version}}"  class="form-control" id="user_version" placeholder="30XXX" autofocus required>
+              </div>
+         </div>
+
+<div class="col-xs-2 col-sm-4">
+                <button type="submit" class="btn btn-default col-lg-12">更   新</button>
+    </div>
+            </form>
+
+                <br>
+                 <br>
+                 <br>
+        <div class="col-xs-2 col-sm-4 sidebar-offcanvas" id="sidebar">
+                                  <div class="input-group">
+                 <span class="input-group-addon">用户姓名</span>
+                 <input type="text" name='usertname' value="{{title}}" class="form-control" id="user_tname"  autofocus required>
+              </div>
+
+
+        </div>
+         <div class="col-xs-2 col-sm-4 sidebar-offcanvas" id="sidebar">
+            <div class="input-group">
+                 <span class="input-group-addon">当前日期</span>
+                 <input type="text" name='usertdate' value="{{date}}" class="form-control" id="user_tdate"  autofocus required>
+              </div>
+             </div>
+         <div class="col-xs-2 col-sm-4 sidebar-offcanvas" id="sidebar">
+
+                          <div class="input-group">
+                 <span class="input-group-addon">检测结论</span>
+                 <input type="text" name='usertres'  value="数据正常" class="form-control" id="user_tres"  autofocus required>
+              </div>
+        </div>
+
+</div>
+
+        <div class="col-xs-2 col-sm-2 sidebar-offcanvas" >
             <div class="list-group">
                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleData">后一天</a>
                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleData1">前一天 </a>
@@ -21,76 +119,14 @@
                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleListUp">列表上一个 </a>
             </div>
         </div>
-
-        <!--/.sidebar-offcanvas-->
-        <div class="col-xs-12 col-sm-3">
-            <p class="padding-right visible-xs">
-                <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
-            </p>
-
-            <form class='form-login' action="/login/" method="post">
-
-              {% if message %}
-                  <div class="alert alert-warning">{{ message }}</div>
-              {% endif %}
-
-              {% csrf_token %}
-              <div class="form-group">
-                <label for="id_username">用户名：</label>
-                <input type="text" name='username' class="form-control" id="id_username" placeholder="CCID" autofocus required>
-              </div>
-                <div class="form-group">
-                <label for="datetime">日期：</label>
-                <input type="date" name='datetime' class="form-control" id="datetime" auto_now autofocus required>
-               </div>
-              <button type="submit" class="btn btn-primary pull-right">提交</button>
-            </form>
-         </div>
-
-            <div class="col-xs-16 col-sm-3">
-            <p class="padding-right visible-xs">
-                <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
-            </p>
-
-            <form class='form-choose' action="/choose/" method="post">
-
-              {% if message %}
-                  <div class="alert alert-warning">{{ message }}</div>
-              {% endif %}
-
-              {% csrf_token %}
-            <div class="form-group">
-              <label for="check_box_list">晚间时间选择：</label>
-                <br>
-                <input type="checkbox" value="1" name="check_box_list"/>21:00-7:00
-                <input type="checkbox" value="2" name="check_box_list"/>21:00-8:00
-                <input type="checkbox" value="3" name="check_box_list"/>21:00-9:00
-                <input type="checkbox" value="4" name="check_box_list"/>22:00-7:00
-                <input type="checkbox" value="5" name="check_box_list"/>22:00-8:00
-                <input type="checkbox" value="6" name="check_box_list"/>22:00-9:00
-                <input type="checkbox" value="7" name="check_box_list"/>23:00-7:00
-                <input type="checkbox" value="8" name="check_box_list"/>23:00-8:00
-                <input type="checkbox" value="9" name="check_box_list"/>23:00-9:00
-                <input type="checkbox" value="10" name="check_box_list"/>24:00-7:00
-                <input type="checkbox" value="11" name="check_box_list"/>24:00-8:00
-                <input type="checkbox" value="12" name="check_box_list"/>24:00-9:00
-               </div >
-              <button type="submit" class="btn btn-primary pull-right">更新</button>
-            </form>
-            <br>
-        <br>
-        <br>
-        <br>
-         </div>
           <div class="col-xs-2 col-sm-12">
-            <div id="id_echarts_container" style="height: 1100px;"></div>
+            <div id="id_echarts_container" style="height: 1000px;"></div>
 
         </div>
         <!--/.col-xs-12.col-sm-9-->
-
-
     </div>
 {% endblock %}
+
 
 
 {% block extra_script %}
@@ -98,7 +134,9 @@
     <script src="http://echarts.baidu.com/asset/map/js/china.js"></script>
     <script type="text/javascript">
         var mChart;
+        var timer=1;
         function loadEcharts(name) {
+
             var url = '/options/' + name + '/';
             if (mChart != null) {
                 mChart.clear();
@@ -114,13 +152,65 @@
                 mChart.hideLoading();
                 mChart.setOption(data);
             });
+            timer=1;
         }
         $(document).ready(function () {
             $('a[data-echarts-name]').on('click', function () {
                 var name = $(this).data('echartsName');
                 loadEcharts(name);
+                timer=3;
             });
             loadEcharts('simpleBar');
         });
+
+          function loadXMLDoc()
+        {
+        if (timer< 6) {
+            var xmlhttp;
+            var strs = new Array(); //定义一数组
+
+            if (window.XMLHttpRequest) {
+
+                xmlhttp = new XMLHttpRequest();
+            }
+
+            else {
+                xmlhttp = new ActiveXObject("Microsoft.XMLHTTP");
+            }
+
+            xmlhttp.onreadystatechange = function () {
+
+                if (xmlhttp.readyState == 4 && xmlhttp.status == 200) {
+
+                    //document.getElementById("aa").innerHTML=xmlhttp.responseText;
+
+                    // document.getElementById("user_tdate").value=xmlhttp.responseText;
+                    strs = xmlhttp.responseText.split("/"); //字符分割
+                    document.getElementById("user_tdate").value = strs[0]
+                    document.getElementById("user_tname").value = strs[1]
+                    document.getElementById("user_version").value = strs[2]
+
+                }
+            }
+
+            str_date = document.getElementById("user_tdate").value;
+            str_name = document.getElementById("user_tname").value;
+            str_version = document.getElementById("user_version").value;
+
+            //xmlhttp.open("GET","/login?t_date="+str_date,true);
+            xmlhttp.open("GET", "/login?t_date=" + str_date + '?t_name=' + str_name + '?t_version=' + str_version , true);
+
+            xmlhttp.send();
+        }
+        else
+        {timer-=1;}
+        }
+
+        window.setInterval(loadXMLDoc,2000);
+
     </script>
+
+
+
+
 {% endblock %}

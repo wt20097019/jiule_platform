@@ -1,15 +1,46 @@
 {% extends 'base.html' %}
 {% block main_content %}
-    <p>佩戴数据分析平台</p>
+
+
+<div class="jumbotron">
+        <h2>生命传感数据分析平台</h2>
+        <p>一个供团队内部进行生命体征数据分析的深度学习平台。</p>
+        <p class="small">最新版本：v1.3--2018.05.11</p>
+    </div>
+    <div class="page-header">
+        <h2>基础功能</h2>
+    </div>
     <div class="row">
         <div class="col-md-6">
             <div class="panel panel-default">
                 <div class="panel-heading">数据查询</div>
                 <div class="panel-body">
-                    <p><a href="/login/">数据查询</a></p>
+                    <p><a href="{% url 'frontend_demo' %}">数据查询</a></p>
                 </div>
             </div>
         </div>
-    </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">统计分析</div>
+                <div class="panel-body">
+                    <p><a href="#">统计分析</a></p>
+                </div>
+            </div>
+        </div>
 
+    </div>
+    <div class="page-header">
+        <h2>高级功能（敬请期待）</h2>
+    </div>
+    <div class="row">
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">机器学习</div>
+                <div class="panel-body">
+                    <p><a href="#">机器学习</a></p>
+                </div>
+            </div>
+        </div>
+
+    </div>
 {% endblock %}

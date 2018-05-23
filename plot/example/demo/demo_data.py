@@ -14,20 +14,36 @@ import seaborn as sns
 import requests
 from io import StringIO
 import time
+import threading
 
-from .Changef import  Str_Change_Time,Str_Chnage_data,Change_Str_Data,num,abs_diff,Bad_output,Time_get,Str_Chage_N
+from .Changef import  Str_Change_Time,Str_Chnage_data,Change_Str_Data,num,abs_diff,Bad_output,Time_get,Str_Chage_N,Data_martix,Choose_time,Com_Rate,Get_rate
 
 
 
+#str_path = 'http://api.releasetest.jiuletech.com/data/t3_data.php?filter_name='
 str_path = 'http://api.jiuletech.com/data/t3_data.php?filter_name='
 str_path1 = 'http://api.jiuletech.com/data/t3_data.php?filter_name='
+#str_path1 = 'http://api.releasetest.jiuletech.com/data/t3_data.php?filter_name='
 str_path2 = 'http://api.jiuletech.com/test/t3_data.php?filter_name='
 str_path3 = 'http://api.releasetest.jiuletech.com/data/t3_data.php?filter_name='
+
+headers = {'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+           'Accept-Encoding': 'gzip, deflate',
+           'Accept-Language': 'zh-CN,zh;q=0.8,zh-TW;q=0.7,zh-HK;q=0.5,en-US;q=0.3,en;q=0.2',
+           'Cache-Control': 'max-age=0',
+           'Host': 'api.jiuletech.com',
+           'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; WOW64; rv:59.0) Gecko/20100101 Firefox/59.0',
+           'Connection': 'keep-alive',
+           'Upgrade-Insecure-Requests': '1',
+           'Authorization': 'Basic aml1bGV0ZWNoOkppdUxl',
+           'Referer': 'http://api.jiuletech.com/data/t3_data.php?filter_start_date=2018-04-15&filter_to_date=2018-05-15&filter_name=16428&s=0'
+           }
+
 name = 0
 flag = 0
 rate = 50
 title = ' '
-version = 0
+list_flag = 0
 
 username = '16480'
 date_pro = '2018-03-15'
@@ -47,9 +63,76 @@ def save_list(a):
     global checklist
     checklist = a
 
+
+
+def Get_ccid():
+    global username
+    return username
 listname = []
+mersion = '30119'
+
 def Name_list():
+    global list_flag
     global listname
+    global Version
+    global headers
+    global leng
+
+    if list_flag == 0:
+
+        if str_path == str_path1:
+
+            Version_Get()
+            pydata = {
+                'filter_name': 'V30122',
+                'page':'1'}
+
+            url = 'http://api.jiuletech.com/data/t3_upgrade.php?filter_name=' + Version
+
+            headers['Referer'] = 'http://api.jiuletech.com/data/t3_upgrade.php?filter_name=16480'
+            m1 = pd.DataFrame(np.arange(0), columns=['timestamp'])
+            for j in range(5):
+                pydata['filter_name'] = Version
+                pydata['page'] = str(j + 1)
+
+                url = 'http://api.jiuletech.com/data/t3_upgrade.php?filter_name=' + Version + '&page=' + str(j + 1)
+                length_list = 0
+                try:
+                    r = requests.post(url, headers=headers, data=pydata)
+                except:
+                    page_source = []
+                    length_list = 0
+                else:
+                    page_source = r.text
+                    aa = re.findall(r'<td[^>]*>(.*?)</td>', page_source)
+                    length_list = int(len(aa) / 8)
+
+                if length_list > 1:
+                    m = pd.DataFrame(np.arange(length_list), columns=['timestamp'])
+                    for i in range(length_list):
+                        m.iloc[i, 0] = aa[8 * i + 1]
+                    m1 = pd.merge(m1, m, how='outer')
+
+                if length_list < 29:
+                    break
+
+            if len(m1) >= 2:
+                listname = m1['timestamp']
+                listname.index = np.arange(len(listname))
+
+        else:
+            if str_path == str_path2:
+                path = 'http://api.jiuletech.com/test/t3_upgrade.php?filter_name='
+            elif str_path == str_path3:
+                path = 'http://api.releasetest.jiuletech.com/data/t3_upgrade.php?filter_name='
+            Version_Get()
+            path = path + Version
+            data2 = pd.read_html(path)[0]
+            data = data2.drop([0])
+            listname = data[1]
+            listname.index = np.arange(len(listname))
+            list_flag = 1
+    leng = len(listname)
     return listname
 
 
@@ -74,9 +157,14 @@ def data_fill(str_choose):
     temp1['timestamp'] = com['timestamps']
     temp1['data'] = 0
 
-    temp2 = pd.DataFrame(np.arange(len(temp3['timestamps'])), columns=['timestamp'])
-    temp2['timestamp'] = temp3['timestamps']
-    temp2['data'] = temp3[str_choose]
+    if len(temp3) > 1:
+        temp2 = pd.DataFrame(np.arange(len(temp3['timestamps'])), columns=['timestamp'])
+        temp2['timestamp'] = temp3['timestamps']
+        temp2['data'] = temp3[str_choose]
+    else:
+        temp2 = pd.DataFrame(np.arange(1), columns=['timestamp'])
+        temp2['timestamp'] = 0
+        temp2['data'] = 0
 
     temp = pd.merge(temp1, temp2, how='left', on=['timestamp'])
     temp5 = pd.DataFrame(np.arange(288), columns=['data'])
@@ -140,9 +228,15 @@ def data_to_list_spo2(temp_s,str_choose):
 
 def  fill_data(temp_sp2,strinput):
     temp1 = pd.DataFrame(np.arange(144), columns=['cnt'])
-    temp2 = pd.DataFrame(np.arange(len(temp_sp2)), columns=['cnt'])
-    temp2['cnt'] = temp_sp2['timestamp']
-    temp2['data'] = temp_sp2[strinput]
+
+    if len(temp_sp2) > 0:
+        temp2 = pd.DataFrame(np.arange(len(temp_sp2)), columns=['cnt'])
+        temp2['cnt'] = temp_sp2['timestamp']
+        temp2['data'] = temp_sp2[strinput]
+    else:
+        temp2 = pd.DataFrame(np.arange(1), columns=['cnt'])
+        temp2['cnt'] = 0
+        temp2['data'] = 0
 
     for i in range(145):
         j = i % 6
@@ -180,33 +274,25 @@ def  fill_data(temp_sp2,strinput):
     return train_t_list,train_w_list
 
 
-start = 9
-end = 23
-def Choose_time():
-    global end
-    global start
-    global checklist
 
-    mm = int(str(checklist)[2])
 
-    if mm == 0:
-        start = 9
-        end = 23
-    else:
-        if int(mm%3) == 0:
-            start = 9
-        else:
-            start = 6+ int(mm%3)
-
-        end = 21 + int((mm-1)/4)
-
+date_upgrade = '2018-05-17'
+"""获取用户名"""
 old_username = ''
 def  Name_title():
     global username
-    global title
     global str_path
     global old_username
     global date_pro
+    global title
+    global date_upgrade
+
+    pydata = {'filter_name': '16480',
+              'filter_start_date': '2018-03-01',
+              'filter_to_date': '2018-03-09'}
+
+    url = 'http://api.jiuletech.com/data/t3_data.php?filter_name=' + username
+
 
     if old_username == username:
         old_username = username
@@ -219,13 +305,83 @@ def  Name_title():
         today = time.strftime('%Y-%m-%d', x)
         date = time.strftime('%Y-%m-%d', x1)
         path = str_path  + username + '&filter_start_date=' + date + '&filter_to_date=' + today
-        data = pd.read_html(path)[0]
 
-        if len(data) >= 2:
-            title = str(data.iloc[2,2])
-            old_username = username
+        if str_path == str_path1:
+            date = datetime.strptime(date_upgrade, '%Y-%m-%d')
+            date = date + timedelta(days=-1)
+            detester = date.strftime('%Y-%m-%d')
+            pydata['filter_start_date'] = detester
+
+            pydata['filter_to_date'] = date_upgrade
+            pydata ['filter_name'] = username
+
+            try:
+                r = requests.post(url, headers=headers, data=pydata)
+            except requests.ConnectionError:
+                aa = []
+            else:
+                page_source = r.text
+                aa = re.findall(r'<td[^>]*>(.*?)</td>', page_source)
+
+            if len(aa) >= 18:
+                title = aa[2]
+            else:
+                title = 'Test1 '
+
         else:
-            title = ''
+            data = pd.read_html(path)[0]
+            if len(data) >= 2:
+                title = str(data.iloc[2,2])
+                old_username = username
+            else:
+                title = ''
+
+    return title
+
+
+Version = '30119'
+"""获取版本号"""
+def  Version_Get():
+    global str_path
+    global username
+    global Version
+    global headers
+    global date_upgrade
+
+    if str_path == str_path1:
+        pydata = {
+            'filter_name': '16480'}
+
+        url = 'http://api.jiuletech.com/data/t3_upgrade.php?filter_name=' + username
+        pydata['filter_name'] = username
+        headers['Referer'] = 'http://api.jiuletech.com/data/t3_upgrade.php?filter_name='
+        try:
+            r = requests.post(url, headers=headers, data=pydata)
+        except requests.ConnectionError:
+            aa = []
+        else:
+            page_source = r.text
+            aa = re.findall(r'<td[^>]*>(.*?)</td>', page_source)
+
+        if len(aa) >= 1:
+            Version = aa[2]
+            date_upgrade = aa[7][0:10]
+        else:
+            Version = ''
+    else:
+        if str_path == str_path2:
+            str_path_version = 'http://api.jiuletech.com/test/t3_upgrade.php?filter_name='
+
+        elif str_path == str_path3:
+            str_path_version = 'http://api.releasetest.jiuletech.com/data/t3_upgrade.php?filter_name='
+
+        path = str_path_version + username
+        data2 = pd.read_html(path)[0]
+        data2 = data2.drop([0])
+        m_version = str(data2[2])
+        Version = m_version[6:11]
+
+    return Version
 
 
 
@@ -246,22 +402,6 @@ def getMonthFirstDayAndLastDay(year=None, month=None):
     return  monthRange
 
 
-def Get_rate(data):
-    if len(data) > 5:
-        data_usable_hr = data[data['spo2'] > 0]
-        data_usable = data_usable_hr[data_usable_hr['heartrate'] > 0]
-        try:
-            rate = len(data_usable) / len(data) * 100
-        except ZeroDivisionError:
-            rate = 0
-    else:
-        rate = 0
-
-    rate = float('%.2f' % rate)
-    return rate
-rate_save = pd.DataFrame(np.arange(10), columns=['timesta'])
-
-
 
 """电容波动情况的图形页面绘制"""
 def create_simple_bar():
@@ -278,7 +418,11 @@ def create_simple_bar():
     global max_channel2
     global max_channel3
 
+    global h
+    global leng
+
     Data_Acquire()
+    temp3 = Change_Str_Data(da)
 
     if flag == 0:
         com = temp3
@@ -286,32 +430,23 @@ def create_simple_bar():
 
     """三个通道的电容值进行归一化处理"""
 
-    max_channel1 = temp3['channel1'].max()
-    max_channel2 = temp3['channel2'].max()
-    max_channel3 = temp3['channel3'].max()
-    """
-    temp3['channel1'] = temp3['channel1']/max_channel1*1000
-    temp3['channel2'] = temp3['channel2'] / max_channel2 * 1000
-    temp3['channel3'] = temp3['channel3'] / max_channel3 * 1000
-    """
+    if len(temp3) > 0:
+        max_channel1 = temp3['channel1'].max()
+        max_channel2 = temp3['channel2'].max()
+        max_channel3 = temp3['channel3'].max()
+        """
+        temp3['channel1'] = temp3['channel1']/max_channel1*1000
+        temp3['channel2'] = temp3['channel2'] / max_channel2 * 1000
+        temp3['channel3'] = temp3['channel3'] / max_channel3 * 1000
+        """
 
-    temp3['channel1'] = temp3['channel1'].map(Normalize(1))
-    temp3['channel2'] = temp3['channel2'].map(Normalize(2))
-    temp3['channel3'] = temp3['channel3'].map(Normalize(3))
+        temp3['channel1'] = temp3['channel1'].map(Normalize(1))
+        temp3['channel2'] = temp3['channel2'].map(Normalize(2))
+        temp3['channel3'] = temp3['channel3'].map(Normalize(3))
 
-    """将dataFrame格式转为list"""
-    train_x_list = data_to_list('timestamp')   # list
-    train_y_list = data_to_list('wear_data')
-    train_z_list = data_to_list('Wear_type')
-    train_k_list = data_to_list('channel1')
-    train_l_list = data_to_list('channel2')
-    train_a_list = data_to_list('channel3')
-    train_b_list = data_to_list('Activity')
-    train_c_list = data_to_list('activity')
-    train_o_list = data_to_list('Charge')
 
     """数据未达到指定组数时进行数据填充"""
-    if len(temp3['timestamps']) < 280:
+    if len(temp3) < 280:
         train_x_list = data_fill('timestamp')  # list
         train_y_list = data_fill('wear_data')
         train_z_list = data_fill('Wear_type')
@@ -321,80 +456,52 @@ def create_simple_bar():
         train_o_list = data_fill('Charge')
         train_b_list = data_fill('Activity')
         train_c_list = data_fill('activity')
+    else:
+        """将dataFrame格式转为list"""
+        train_x_list = data_to_list('timestamp')  # list
+        train_y_list = data_to_list('wear_data')
+        train_z_list = data_to_list('Wear_type')
+        train_k_list = data_to_list('channel1')
+        train_l_list = data_to_list('channel2')
+        train_a_list = data_to_list('channel3')
+        train_b_list = data_to_list('Activity')
+        train_c_list = data_to_list('activity')
+        train_o_list = data_to_list('Charge')
 
-    plotstr2 = str(date_pro) + '/' + username +'-'+ title + ': ' + "检测结论----该段时间内数据正常"
-    line2 = Line("Mems波动值",plotstr2)
+    plotstr2 = str(leng) + str(date_pro) + '/' + username + '-' + title + ': ' + "检测结论----该段时间内数据正常"
+    line2 = Line("Mems波动值", plotstr2)
     strm = "Mems波动值"
     strn = "活动量"
-    line2.add(strm, train_x_list, train_b_list,yaxis_min ="dataMin",legend_top="5%")
-    line2.add(strn, train_x_list, train_c_list,yaxis_min = "dataMin",legend_top="5%")
+    line2.add(strm, train_x_list, train_b_list, yaxis_min="dataMin", legend_top="1%")
+    line2.add(strn, train_x_list, train_c_list, yaxis_min="dataMin", legend_top="1%")
 
-    line3 = Line("三通道归一化后变化",title_top="50%")
+    line3 = Line("三通道归一化后变化", title_top="50%")
     strc1 = "Chnanel1"
     strc2 = "Chnanel2"
-    strc3= "Chnanel3"
-    line3.add(strc1, train_x_list, train_k_list,yaxis_min =500,legend_top="50%")
-    line3.add(strc2, train_x_list, train_l_list,yaxis_min = 500,legend_top="50%")
-    line3.add(strc3, train_x_list, train_a_list, yaxis_min=500, legend_top="50%")
+    strc3 = "Chnanel3"
+    line3.add(strc1, train_x_list, train_k_list, yaxis_min=700, legend_top="51%")
+    line3.add(strc2, train_x_list, train_l_list, yaxis_min=700, legend_top="51%")
+    line3.add(strc3, train_x_list, train_a_list, yaxis_min=700, legend_top="51%")
 
-    line1 = Scatter("佩戴/充电状态",title_top="75%")
-    strm= username + "佩戴状态"
-    line1.add(strm, train_x_list, train_z_list ,xaxis_max = 24,yaxis_min = 0,yaxis_max = 1.2,legend_top="75%")
-    line1.add('充电状态', train_x_list, train_o_list,xaxis_max = 24,yaxis_min = 0,yaxis_max = 1.2, legend_top="75%",symbol_size=5,xaxis_name = 'Time/H')
+    line1 = Scatter("佩戴/充电状态", title_top="75%")
+    strm = "佩戴状态"
+    line1.add(strm, train_x_list, train_z_list, xaxis_max=24, yaxis_min=0, yaxis_max=1.2, legend_top="76%")
+    line1.add('充电状态', train_x_list, train_o_list, xaxis_max=24, yaxis_min=0, yaxis_max=1.2, legend_top="76%",
+              symbol_size=5, xaxis_name='Time/H')
 
-    line = Line("电容波动情况", title_top="30%")
-    strm= username + "电容值波动情况"
-    line.add(strm, train_x_list, train_y_list,yaxis_min = 0,legend_top="30%",label_color="#40ff27")
+    line = Line("电容波动情况", title_top="25%")
+    strm = "电容值波动情况"
+    line.add(strm, train_x_list, train_y_list, yaxis_min=0, legend_top="26%", label_color="#40ff27")
 
     page = Grid()
     page.add(line3, grid_top="55%", grid_bottom="30%")
     page.add(line1, grid_top="80%", grid_bottom="5%")
-    page.add(line, grid_top="35%", grid_bottom="53%")
-    page.add(line2, grid_top="10%", grid_bottom="75%")
+    page.add(line, grid_top="30%", grid_bottom="55%")
+    page.add(line2, grid_top="5%", grid_bottom="80%")
     page.renderer = 'svg'
     return page
 
 
-
-
-
-def   Error_pro(date_pro):
-
-    h1 = '血氧灯模块错误'
-
-    TimeString = str(date_pro) + ' ' + '0:00:00'
-    TimeStampChoose = int(time.mktime(time.strptime(TimeString, '%Y-%m-%d %H:%M:%S')))
-
-    x = time.localtime(TimeStampChoose + 86400)  # localtime参数为float类型，这里y1317091800.0为float类型
-    x2 = time.localtime(TimeStampChoose - 86400 * 5)
-    str_date1 = time.strftime('%Y-%m-%d', x)
-    str_date2 = time.strftime('%Y-%m-%d', x2)
-
-    l1 = Scrapy(str_date1, str_date2)
-    length_all = len(l1)
-    l1 = l1[l1['healthindex'] == 217]
-    bad = len(l1)
-    ra = bad / length_all
-
-
-    length = len(l1)
-    temp1 = pd.DataFrame(np.arange(length), columns=['wear_data'])
-    temp1['wear_data'] = l1['wear_data'].map(Str_Chage_N(14))
-    temp2 = pd.DataFrame(np.arange(length), columns=['wear_data'])
-    temp2['wear_data'] = l1['wear_data'].map(Str_Chage_N(12))
-    temp3 = pd.merge(temp1, temp2, how='outer')
-
-    temp_mean = temp3['wear_data'].mean()
-
-    if ra <= 0.3:
-        h2 = ':请客户继续佩戴,便于分析'
-    else:
-        h2 = '：请客户直接寄回维修！'
-    if temp_mean <= 5:
-        h2 = h2 + 'FPC连接异常'
-    h1 = h1 + h2 + str(bad) + '/' + str(length_all)
-
-    return h1
 
 """血氧心率页面图形绘制"""
 def create_simple_kline():
@@ -407,57 +514,70 @@ def create_simple_kline():
     global rate_day1
     global checklist
     global title
+    global da
 
+    temp_spo2 = Data_martix(da)
 
-    train_x_list = data_to_list_spo2(temp_spo2,'timestamp')
-    train_y_list = data_to_list_spo2(temp_spo2,'spo2')
-    train_z_list = data_to_list_spo2(temp_spo2,'hr')
+    if len(temp_spo2) > 1:
+        train_x_list = data_to_list_spo2(temp_spo2,'timestamp')
+        train_y_list = data_to_list_spo2(temp_spo2,'spo2')
+        train_z_list = data_to_list_spo2(temp_spo2,'hr')
 
-    temp_spo3 = temp_spo2[temp_spo2['healthindex'] > 0]
-    data_x = temp_spo3['healthindex']
-    train_data = np.array(data_x)
-    train_e_list = train_data.tolist()  # list
+        temp_spo3 = temp_spo2[temp_spo2['healthindex'] > 0]
+        data_x = temp_spo3['healthindex']
+        train_data = np.array(data_x)
+        train_e_list = train_data.tolist()  # list
 
-    data_x = temp_spo3['timestamp']
-    train_data = np.array(data_x)
-    train_r_list = train_data.tolist()  # list
+        data_x = temp_spo3['timestamp']
+        train_data = np.array(data_x)
+        train_r_list = train_data.tolist()  # list
 
-    dd = temp_spo2[temp_spo2['healthindex'] ==15]
+        dd = temp_spo2[temp_spo2['healthindex'] ==15]
 
+        train_t_list = data_to_list_spo2(temp_spo2, 'timestamp')
+        train_k_list = data_to_list_spo2(temp_spo2, 'wear_type')
+        cost_matrix = temp_spo2[temp_spo2['cost_all'] > 0]
 
+        cost_matrix1 = cost_matrix[cost_matrix['cost_all'] > 0]
+        cost_all = cost_matrix1['cost_all'].mean()
+        cost_all = float('%.1f' % cost_all)
+        h = '平均耗时:' + str(cost_all) + 's'
+
+    else:
+        train_x_list = []
+        train_y_list = []
+        train_z_list = []
+        train_e_list = []
+        train_r_list = []
+        train_k_list = []
+        dd = []
+        h = '平均耗时:' + str(0) + 's'
 
     if len(dd) >= 10:
         h1 = Error_pro(date_pro)
     else:
         h1 = ''
 
-
+    start, end = Choose_time(checklist)
     plotstr = str(date_pro) + '/' + username + '-'+title + ': ' + 'The useful data rate is ' + str(rate_all) +'% 晚间(' + str(end) + ':00--' + str(start) + ':00)有效率：' +str(rate_night1) +  '% ; 白天 ：' + str(rate_day1) + '%)'
-    line = Scatter("血氧/心率值",plotstr)
-    line.add("血氧", train_x_list, train_y_list, xaxis_min=0, xaxis_max=24)
-    line.add("心率", train_x_list, train_z_list, xaxis_min=0, xaxis_max=24)
-    line.add("信号不佳", train_r_list, train_e_list, xaxis_min=0, xaxis_max=24)
+    line = Scatter("血氧/心率值",plotstr,title_top="0%")
+    line.add("血氧", train_x_list, train_y_list, xaxis_min=0, xaxis_max=24,legend_top="1%")
+    line.add("心率", train_x_list, train_z_list, xaxis_min=0, xaxis_max=24,legend_top="1%")
+    line.add("信号不佳", train_r_list, train_e_list, xaxis_min=0, xaxis_max=24,legend_top="1%")
 
     line.xaxis_min = 0
     line.xaxis_max = 24
 
-    train_t_list = data_to_list_spo2(temp_spo2,'timestamp')
-    train_w_list = data_to_list_spo2(temp_spo2,'cost')
-    train_k_list = data_to_list_spo2(temp_spo2,'wear_type')
-    train_j_list = data_to_list_spo2(temp_spo2,'cost_all')
 
-    cost_matrix = temp_spo2[temp_spo2['cost_all'] > 0]
-    train_h_list = data_to_list_spo2(temp_spo2,'cost_cnt')
-
-    cost_matrix1 = cost_matrix[cost_matrix['cost_all'] > 0]
-    cost_all = cost_matrix1['cost_all'].mean()
-    cost_all = float('%.1f' % cost_all)
-    h = '平均耗时:' + str(cost_all) + 's'
 
     if len(temp_spo2) < 144:
         train_t_list,train_w_list = fill_data(temp_spo2,'cost')
         train_t_list,train_j_list = fill_data(temp_spo2,'cost_all')
         train_f_list, train_h_list = fill_data(temp_spo2, 'cost_cnt')
+    else:
+        train_w_list = data_to_list_spo2(temp_spo2, 'cost')
+        train_h_list = data_to_list_spo2(temp_spo2, 'cost_cnt')
+        train_j_list = data_to_list_spo2(temp_spo2, 'cost_all')
 
 
     line1 = Scatter("佩戴状态",h1,title_top="25%")
@@ -500,29 +620,46 @@ def  Scrapy(str_date1,str_date2):
     pydata['filter_to_date'] = str_date1
 
     path = str_path + username
-    r = requests.post(path, data=pydata)
-    imgBuf = StringIO(r.text)
-    df = pd.read_csv(imgBuf)
+
+    df = []
+    try:
+        if str_path == str_path1:
+            r=requests.post(path,headers = headers,data =pydata)
+        else:
+            r = requests.post(path, data=pydata)
+    except requests.ConnectionError:
+        a = 1
+    else:
+        imgBuf = StringIO(r.text)
+        df = pd.read_csv(imgBuf)
+
     return df
 
 
 
 
 
+
+def get3():
+    global listname
+    listname = Name_list()
+
+def get4():
+    global title
+    title = Name_title()
+
+da = []
 def Data_get():
     global username
-    global temp3
-    global temp_spo2
     global date_pro
     global slee
     global rate_all
     global rate_night1
     global rate_day1
-    global end
-    global start
-    global version
+    global title
     global listname
-
+    global checklist
+    global da
 
     TimeString = str(date_pro) + ' ' + '0:00:00'
     TimeStampChoose = int(time.mktime(time.strptime(TimeString, '%Y-%m-%d %H:%M:%S')))
@@ -532,98 +669,89 @@ def Data_get():
     str_date1 = time.strftime('%Y-%m-%d', x)
     str_date2 = time.strftime('%Y-%m-%d', x2)
 
-    df = Scrapy(str_date1,str_date2)
+    df = Scrapy(str_date1, str_date2)
 
-    da = df.sort_values(axis=0, ascending=True, by='timestamp')
-    sl = da[da['timestamp'] >= (TimeStampChoose - 10800)]
-    sl = sl[sl['timestamp'] <= (TimeStampChoose + 32400)]
-    sl.index = np.arange(len(sl))
+    if len(df) < 8:
+        da = []
+    else:
+        da = df.sort_values(axis=0, ascending=True, by='timestamp')
+        sl = da[da['timestamp'] >= (TimeStampChoose - 10800)]
+        sl = sl[sl['timestamp'] <= (TimeStampChoose + 32400)]
+        sl.index = np.arange(len(sl))
 
-    legnt4 = len(sl)
-    slee = pd.DataFrame(np.arange(legnt4), columns=['ti'])
-    slee['ti'] = 0
-    slee['time'] = sl['timestamp'].map(Str_Change_Time(0))
-    slee['wear_type'] = sl['wear_type']
+        legnt4 = len(sl)
+        slee = pd.DataFrame(np.arange(legnt4), columns=['ti'])
+        slee['ti'] = 0
+        slee['time'] = sl['timestamp'].map(Str_Change_Time(0))
+        slee['wear_type'] = sl['wear_type']
 
-    slee['ti'] = sl['sleep_effective_time'].diff()
-    slee.loc[0, 'ti'] = 0
-    slee['ti'] = slee['ti'].map(abs_diff)
+        slee['ti'] = sl['sleep_effective_time'].diff()
+        slee.loc[0, 'ti'] = 0
+        slee['ti'] = slee['ti'].map(abs_diff)
 
+        data_wear = da[da['wear_type'] == 1]
 
-    da = da[da['timestamp'] >= TimeStampChoose]
-    length1 = len(da)
-    da.index = np.arange(length1)
-    temp_spo2 = pd.DataFrame(np.arange(length1), columns=['spo2'])
-    temp_spo2['spo2'] = da['spo2']
-    temp_spo2['hr']= da['heartrate']
-    temp_spo2['wear_type'] = da['wear_type']
-    temp_spo2['timestamp'] = da['timestamp'].map(Str_Change_Time(2))
-    temp_spo2['cost'] = da['wear_data'].map(Str_Chnage_data(5))
-    temp_spo2['cost_all'] = da['wear_data'].map(Str_Chnage_data(6))
-    temp_spo2['cost_cnt'] = da['wear_data'].map(Str_Chnage_data(9))
-    temp_spo2['healthindex'] = da['healthindex'].map(Bad_output)
+        da = da[da['timestamp'] >= TimeStampChoose]
 
-    temp3 = Change_Str_Data(da)
+        threads = []
+        loops = [4, 2]
+        nloops = range(len(loops))  # 列表[0,1]
 
-    data_wear = da[da['wear_type'] == 1]
+        length_3 = len(da)
 
-    data_wear['Hour'] = data_wear['datetime'].map(Time_get(1))
+        if length_3 >= 2:
+            # 创建线程
+            t2 = threading.Thread(target=get3(), args=(0, loops[0]))
+            threads.append(t2)
 
-    rate_all = Get_rate(data_wear)
+            t3 = threading.Thread(target=get4(), args=(0, loops[1]))
+            threads.append(t3)
 
+            # 开始线程
+            for i in nloops:
+                threads[i].start()
 
-    Choose_time()
+            # 等待所有结束线程
+            for i in nloops:
+                threads[i].join()
 
-
-    data_night1 = data_wear[data_wear['Hour'] <= start]
-    data_night2 = data_wear[data_wear['Hour'] >= end]
-    data_night = pd.merge(data_night1, data_night2, how='outer')
-    rate_night1 = Get_rate(data_night)
-
-    data_day = data_wear[data_wear['Hour'] > start]
-    data_day = data_day[data_day['Hour'] < end]
-    rate_day1 = Get_rate(data_day)
-
-    if version == 0:
-        path = 'http://api.releasetest.jiuletech.com/data/t3_upgrade.php'
-        data2 = pd.read_html(path)[0]
-        data = data2.drop([0])
-        data[2] = data[2].map(num)
-        data = data[data[2] >= 30113]
-        listname = data[1]
-        listname.index = np.arange(len(listname))
-        version = 1
+            if len(data_wear) >= 1:
+                rate_all, rate_night1, rate_day1 = Com_Rate(data_wear,checklist)
+        else:
+            title = '--'
 
 
 
 """测试和运营/仿真平台的切换"""
 def Data_Acquire():
-    global temp3
+    global da
     global name
     global str_path
     global title
     global username
-
+    global list_flag
     cnt = 0
     Data_get()
-    Name_title()
 
-    length_3 = len(temp3)
+    length_3 = len(da)
     while length_3 <= 0:
         if name == 0:
             str_path = str_path2
+            list_flag = 0
             name = 1
         elif name == 1:
             str_path = str_path1
+            list_flag = 0
             name = 2
         else:
             str_path = str_path3
+            list_flag = 0
             name = 0
         Data_get()
-        Name_title()
+
         cnt = cnt + 1
         if cnt <= 2:
-            length_3 = len(temp3)
+            length_3 = len(da)
         else:
             length_3 = 10
 
@@ -676,8 +804,7 @@ def  Data_for_static():
     global rate_save
     global day
     global temp_static
-    global end
-    global start
+    global checklist
 
     year = int(str(date_pro)[0:4])
     month = int(str(date_pro)[5:7])
@@ -723,7 +850,7 @@ def  Data_for_static():
             rate_save.iloc[1,4] = month
             rate_save.iloc[2, 4] = day
 
-        Choose_time()
+        start,end = Choose_time(checklist)
 
         for i in range(lastDay):
             da = temp_static[temp_static['date'] == i]
@@ -798,7 +925,43 @@ def  Data_for_static():
 
 
 
+def   Error_pro(date_pro):
 
+    h1 = '血氧灯模块错误'
+
+    TimeString = str(date_pro) + ' ' + '0:00:00'
+    TimeStampChoose = int(time.mktime(time.strptime(TimeString, '%Y-%m-%d %H:%M:%S')))
+
+    x = time.localtime(TimeStampChoose + 86400)  # localtime参数为float类型，这里y1317091800.0为float类型
+    x2 = time.localtime(TimeStampChoose - 86400 * 5)
+    str_date1 = time.strftime('%Y-%m-%d', x)
+    str_date2 = time.strftime('%Y-%m-%d', x2)
+
+    l1 = Scrapy(str_date1, str_date2)
+    length_all = len(l1)
+    l1 = l1[l1['healthindex'] == 217]
+    bad = len(l1)
+    ra = bad / length_all
+
+
+    length = len(l1)
+    temp1 = pd.DataFrame(np.arange(length), columns=['wear_data'])
+    temp1['wear_data'] = l1['wear_data'].map(Str_Chage_N(14))
+    temp2 = pd.DataFrame(np.arange(length), columns=['wear_data'])
+    temp2['wear_data'] = l1['wear_data'].map(Str_Chage_N(12))
+    temp3 = pd.merge(temp1, temp2, how='outer')
+
+    temp_mean = temp3['wear_data'].mean()
+
+    if ra <= 0.3:
+        h2 = ':请客户继续佩戴,便于分析'
+    else:
+        h2 = '：请客户直接寄回维修！'
+    if temp_mean <= 5:
+        h2 = h2 + 'FPC连接异常'
+    h1 = h1 + h2 + str(bad) + '/' + str(length_all)
+
+    return h1
 
 
 
