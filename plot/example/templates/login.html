@@ -1,0 +1,126 @@
+{% extends 'base.html' %}
+
+{% block main_content %}
+
+    <div class="row row-offcanvas row-offcanvas-right">
+        <div class="col-xs-6 col-sm-2 sidebar-offcanvas" id="sidebar">
+            <div class="list-group">
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleBar">电容波动图(Bar)</a>
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleKLine">血氧/心率(KLine)</a>
+                <a href="javascript:" class="list-group-item" data-echarts-name="simplePie">睡眠(sleep)</a>
+                <br>
+                 <a href="javascript:" class="list-group-item" data-echarts-name="simpleRate">月度统计(Rate)</a>
+            </div>
+        </div>
+
+        <div class="col-xs-16 col-sm-2 sidebar-offcanvas" id="sidebar">
+            <div class="list-group">
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleData">后一天</a>
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleData1">前一天 </a>
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleListDn">列表下一个 </a>
+                <a href="javascript:" class="list-group-item" data-echarts-name="simpleListUp">列表上一个 </a>
+            </div>
+        </div>
+
+        <!--/.sidebar-offcanvas-->
+        <div class="col-xs-12 col-sm-3">
+            <p class="padding-right visible-xs">
+                <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+            </p>
+
+            <form class='form-login' action="/login/" method="post">
+
+              {% if message %}
+                  <div class="alert alert-warning">{{ message }}</div>
+              {% endif %}
+
+              {% csrf_token %}
+              <div class="form-group">
+                <label for="id_username">用户名：</label>
+                <input type="text" name='username' class="form-control" id="id_username" placeholder="CCID" autofocus required>
+              </div>
+                <div class="form-group">
+                <label for="datetime">日期：</label>
+                <input type="date" name='datetime' class="form-control" id="datetime" auto_now autofocus required>
+               </div>
+              <button type="submit" class="btn btn-primary pull-right">提交</button>
+            </form>
+         </div>
+
+            <div class="col-xs-16 col-sm-3">
+            <p class="padding-right visible-xs">
+                <button type="button" class="btn btn-primary btn-xs" data-toggle="offcanvas">Toggle nav</button>
+            </p>
+
+            <form class='form-choose' action="/choose/" method="post">
+
+              {% if message %}
+                  <div class="alert alert-warning">{{ message }}</div>
+              {% endif %}
+
+              {% csrf_token %}
+            <div class="form-group">
+              <label for="check_box_list">晚间时间选择：</label>
+                <br>
+                <input type="checkbox" value="1" name="check_box_list"/>21:00-7:00
+                <input type="checkbox" value="2" name="check_box_list"/>21:00-8:00
+                <input type="checkbox" value="3" name="check_box_list"/>21:00-9:00
+                <input type="checkbox" value="4" name="check_box_list"/>22:00-7:00
+                <input type="checkbox" value="5" name="check_box_list"/>22:00-8:00
+                <input type="checkbox" value="6" name="check_box_list"/>22:00-9:00
+                <input type="checkbox" value="7" name="check_box_list"/>23:00-7:00
+                <input type="checkbox" value="8" name="check_box_list"/>23:00-8:00
+                <input type="checkbox" value="9" name="check_box_list"/>23:00-9:00
+                <input type="checkbox" value="10" name="check_box_list"/>24:00-7:00
+                <input type="checkbox" value="11" name="check_box_list"/>24:00-8:00
+                <input type="checkbox" value="12" name="check_box_list"/>24:00-9:00
+               </div >
+              <button type="submit" class="btn btn-primary pull-right">更新</button>
+            </form>
+            <br>
+        <br>
+        <br>
+        <br>
+         </div>
+          <div class="col-xs-2 col-sm-12">
+            <div id="id_echarts_container" style="height: 1100px;"></div>
+
+        </div>
+        <!--/.col-xs-12.col-sm-9-->
+
+
+    </div>
+{% endblock %}
+
+
+{% block extra_script %}
+    <script src="https://cdn.bootcss.com/echarts/3.8.5/echarts.min.js"></script>
+    <script src="http://echarts.baidu.com/asset/map/js/china.js"></script>
+    <script type="text/javascript">
+        var mChart;
+        function loadEcharts(name) {
+            var url = '/options/' + name + '/';
+            if (mChart != null) {
+                mChart.clear();
+            }
+            mChart = echarts.init(document.getElementById('id_echarts_container'));
+            mChart.showLoading();
+            $.ajax({
+                url: url,
+                type: "GET",
+                data: null,
+                dataType: "json"
+            }).done(function (data) {
+                mChart.hideLoading();
+                mChart.setOption(data);
+            });
+        }
+        $(document).ready(function () {
+            $('a[data-echarts-name]').on('click', function () {
+                var name = $(this).data('echartsName');
+                loadEcharts(name);
+            });
+            loadEcharts('simpleBar');
+        });
+    </script>
+{% endblock %}

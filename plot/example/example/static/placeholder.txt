@@ -1,0 +1,1 @@
+this file ensures that example will be added to the project
