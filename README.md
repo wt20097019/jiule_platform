@@ -1,2 +1,2 @@
-# jiule_platform
+# platform
 用于数据分析及展示
