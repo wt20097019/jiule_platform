@@ -4,7 +4,7 @@ bitarray==0.8.1
 bkcharts==0.2
 dj-database-url==0.5.0
 dj-static==0.0.6
-Django==2.0.3
+Django==2.2.24
 django-echarts==0.3.2
 gunicorn==19.7.1
 numpy==1.14.0
